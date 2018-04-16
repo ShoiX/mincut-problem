@@ -7,6 +7,10 @@ using namespace std;
 using namespace std::chrono
 
 
+void load()
+{
+	
+}
 
 int main()
 {
