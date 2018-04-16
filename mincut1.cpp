@@ -1,3 +1,4 @@
+// implements karger's contraction algorithm
 #include <iostream>
 #include <chrono>
 #include <math>
