@@ -1,0 +1,88 @@
+edges1: 14
+Cs: 
+edges: 14
+13
+removing 8 of size 3 from 7 of size 3
+pos1: 6
+pos1: 8
+pos2: removed;
+removing 7 of size 2 from 8 of size 3
+pos1: 7
+pos1: removed;
+5
+pos2: merging..
+deleting.. 
+0th loop
+edges: 13
+0
+removing 3 of size 3 from 1 of size 3
+pos1: removed
+4
+pos1: 2
+pos2: removing 1 of size 2 from 3 of size 3
+pos1: 2
+pos1: 1
+pos2: removed;
+merging..
+deleting.. 
+1th loop
+edges: 12
+8
+removing 7 of size 4 from 5 of size 4
+pos1: 6
+pos1: 7
+pos2: removed;
+7
+pos3: removed;
+removing 5 of size 2 from 7 of size 4
+pos1: removed
+6
+pos1: 6
+pos2: 5
+pos3: removed;
+merging..
+deleting.. 
+2th loop
+edges: 11
+10
+removing 7 of size 4 from 6 of size 4
+pos1: 5
+pos1: 5
+pos2: 7
+pos3: removed;
+removing 6 of size 3 from 7 of size 4
+pos1: 6
+pos1: removed;
+6
+pos2: removed;
+6
+pos3: removed;
+merging..
+deleting.. 
+3th loop
+edges: 10
+9
+removing 7 of size 4 from 6 of size 4
+pos1: 5
+pos1: 6
+pos2: 2
+pos3: removing 6 of size 4 from 7 of size 4
+pos1: 5
+pos1: 6
+pos2: removed;
+2
+pos3: merging..
+deleting.. 
+4th loop
+edges: 10
+9
+removing 7 of size 7 from 6 of size 7
+pos1: 5
+pos1: 2
+pos2: 4
+pos3: 5
+pos4: 2
+pos5: 4
+pos6: 5
+pos7: 2
+pos8:
