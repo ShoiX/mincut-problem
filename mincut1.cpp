@@ -34,7 +34,7 @@ public:
 	int size = 0;	// number of vertices adjacent to it
 	node* head;		// head of the ll of vertices adjacent to this
 	int label;	// label of the vertex
-	vertex* point;	// pointer to the vertex merged (points to self at first)
+	vertex* point = NULL;	// pointer to the vertex merged (points to self at first)
 	void dump()
 	{
 		cout<<"size: "<<this->size <<endl;
@@ -50,7 +50,7 @@ public:
 	void init(int arr[], int l, vector<edge> &edges, vector<vertex> &vertices)
 	{
 		node* tmp = this->head;
-		this->point = this;
+		// this->point = this;
 
 		for (int i = 0; i < l; i++)
 		{
@@ -72,19 +72,19 @@ public:
 	}
 
 	// deletes node in the linked-list
-	void remove(vertex* adj)
+	int remove(vertex* adj)
 	{
 		if (this->head == NULL)
-			return;
+			return 0;
 		node* crawler = this->head;
 		node*prev = crawler;
 		cout<<"pos1: ";
-		if (adj == crawler->present->point)
+		if (adj == crawler->present->getAddr())
 		{
 			if (crawler->next == NULL)
 			{
 				this->head = NULL;
-				return;
+				return 0;
 			}
 			else
 			{
@@ -100,10 +100,10 @@ public:
 		int ctr = 1;
 		while (crawler != NULL)
 		{
-			cout<<crawler->present->point->label<<endl;
+			cout<<crawler->present->getAddr()->label<<endl;
 			cout<<"pos"<<ctr<<": ";
 
-			if (adj == crawler->present->point)
+			if (adj == crawler->present->getAddr())
 			{
 				// node is head
 				if (prev->next == NULL)
@@ -139,6 +139,20 @@ public:
 			}
 			ctr++;
 		}
+		return 0;
+	}
+
+	// returns the latest address of the vertex
+	vertex* getAddr()
+	{
+		if (this->point == NULL)
+			return this;
+
+		vertex* crawler = this->point;
+		while (crawler->point != NULL)
+			crawler = crawler->point;
+
+		return crawler;
 	}
 
 };
@@ -183,19 +197,16 @@ void merge(vertex* l, vertex* r)
 	node* crawler = x->head;
 
 	// point tail of ll of l vertex to the start of ll of r vertex
-	/*tmp1[(x->size) - 1].next = y->head;*/
 	while(crawler->next != NULL)
 		crawler = crawler->next;
 	crawler->next = y->head;
 
 	// point the point field of r to point field of l
 	y->head = x->head;
-	y->point = x->point;
+	y->point = x->getAddr();
 	int new_size = y->size + x->size;
 	y->size = new_size;
 	x->size = new_size;
-
-
 
 }
 
@@ -234,25 +245,27 @@ int main()
 		int c = rand() % edges.size();
 
 		cout<<c<<endl;
-		vertex* l = edges[c].a->point;
-		vertex* r = edges[c].b->point;
+		vertex* l = edges[c].a->getAddr();
+		vertex* r = edges[c].b->getAddr();
 
 		// delete the nodes in the list that represents self-loop to the contracted vertices
 		cout<<"removing "<<r->label<<" of size "<<r->size<<" from "<<l->label<<" of size "<<l->size<<endl;
-		l->remove(r);
+		if (l->remove(r) == 1)
+			return 1;
 		cout<<"removing "<<l->label<<" of size "<<l->size<<" from "<<r->label<<" of size "<<r->size<<endl;
-		r->remove(l);
+		if (r->remove(l) == 1)
+			return 1;
 		cout<<"merging.."<<endl;
 		// append remaining nodes of vertex r to vertexl
 		merge(l, r);
 		cout<<"deleting.. "<<endl;
 		// delete self-loop edges
 		for (int p = 0, erased = 0, l = edges.size(); p < l; p++)
-		{
+		{	
 			vertex* x = edges[p - erased].a;
 			vertex* y = edges[p - erased].b;
 
-			if (x->point == y->point)
+			if (x->getAddr() == y->getAddr())
 			{
 				edges.erase(edges.begin() + (p - erased));
 				erased ++;
