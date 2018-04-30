@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <fstream>
 #include <vector>
+#include <sstream>
+#include <tgmath.h>
+
 using namespace std;
 using namespace std::chrono;
 
@@ -37,14 +40,11 @@ public:
 	vertex* point = NULL;	// pointer to the vertex merged (points to self at first)
 	void dump()
 	{
-		cout<<"size: "<<this->size <<endl;
 		node* crawler = this->head;
 		while(crawler != NULL)
 		{
-			cout<<crawler->present->label<<" ";
 			crawler = crawler->next;
 		}
-		cout<<endl;
 	}
 
 	void init(int arr[], int l, vector<edge> &edges, vector<vertex> &vertices)
@@ -61,7 +61,6 @@ public:
 				edgy.a = this;
 				edgy.b = &vertices[arr[i]-1];
 				edges.push_back(edgy);
-				//cout<<this->label<<"-"<<arr[i]<<endl;
 			}
 			
 			tmp[i].id = arr[i];
@@ -78,7 +77,6 @@ public:
 			return 0;
 		node* crawler = this->head;
 		node*prev = crawler;
-		cout<<"pos1: ";
 		if (adj == crawler->present->getAddr())
 		{
 			if (crawler->next == NULL)
@@ -93,16 +91,12 @@ public:
 				prev->next = NULL;
 			}
 			this->size -= 1;
-			cout<<"removed\n";
 		}
 		else
 			crawler = crawler->next;
 		int ctr = 1;
 		while (crawler != NULL)
 		{
-			cout<<crawler->present->getAddr()->label<<endl;
-			cout<<"pos"<<ctr<<": ";
-
 			if (adj == crawler->present->getAddr())
 			{
 				// node is head
@@ -130,7 +124,6 @@ public:
 					prev->next = crawler;
 				}
 				this->size -= 1;
-				cout<<"removed;\n";
 			}
 			else
 			{
@@ -157,13 +150,24 @@ public:
 
 };
 
-bool load(vector<vertex> &vertices, vector<edge> &edges, int n)
+bool load(vector<vertex> &vertices, vector<edge> &edges, int n, std::fstream& mf)
 {
 	for (int i = 0; i < n; i++)
 	{
-		cin>>vertices[i].label;
+		// get current line
+		string linee;
+		getline(mf, linee);
+		std::stringstream linestream(linee);
+		string tmpstr;
+
+		// get label
+		getline(linestream, tmpstr, ' ');
+		vertices[i].label = stoi(tmpstr);
+		
+		// get size
 		int l;
-		cin>>l;
+		getline(linestream, tmpstr, ' ');
+		l = stoi(tmpstr);
 		vertices[i].size = l;
 		vertices[i].head = new node[l];
 		if (vertices[i].head == NULL)
@@ -174,7 +178,11 @@ bool load(vector<vertex> &vertices, vector<edge> &edges, int n)
 		int tmp[l];
 		
 		for (int j = 0; j<l; j++)
-			cin>>tmp[j];
+		{
+			/*cin>>tmp[j];*/
+			getline(linestream, tmpstr, ' ');
+			tmp[j] = stoi(tmpstr);
+		}	
 		vertices[i].init(tmp, l, edges, vertices);	// create a linked list
 	}
 	return true;
@@ -210,87 +218,121 @@ void merge(vertex* l, vertex* r)
 
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-	int n;	// number of vertices
-	cin>>n;
-	if (n == 2)
+	if (argc != 2)
 	{
-		cout<<"Graph is already a mincut"<<endl;
-		return 2;
-	}
-	std::vector<vertex> vertices(n);
-	std::vector<edge> edges;
-	edges.reserve(10 * n);
-
-	if (!load(vertices, edges, n))
-	{
-		cout<<"Error\n";
+		cout<<"usage: ./mincut1 filename\n";
 		return 1;
 	}
-	// store are ll handles;
-	node* handles[n];
-	for (int i = 0; i < n; i++)
+	char* name = argv[1];
+
+	// open the file
+	fstream myfile(name);
+	if(!myfile.is_open())
 	{
-		handles[i] = vertices[i].head;
+		cout<<"Unable to open file\n";
+		return 1;
 	}
-	cout<<"edges1: "<<edges.size()<<endl;
-	cout<<"Cs: "<<endl;
-	/*Start of the Karger's Contraction Algorithm subroutine*/
-	srand(time(NULL));	// seed the pseudo-random generator
-	for (int i = 0; i < n - 2; i++)
+
+	int num;
+	const double e = 2.71828;
+	cin>>num;
+	int loop = (num * num) * (int)log(num);
+	int mincut = 0;
+	int ne = 0;	// number of edges
+	int nv = num;	// number of vertices
+	cout<<"iterations: "<<loop<<endl;
+
+	// timer start
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+	for (int t = 0; t < num * 2; t++)
 	{
-		// choose a random edge
-		cout<<"edges: "<<edges.size()<<endl;
-		int c = rand() % edges.size();
+		string line;
+		// get the number of vertices
+		myfile.clear();
+		myfile.seekg(0, ios::beg);
+		getline(myfile, line);
+		int n = stoi(line);
+		if (n == 2)
+		{
+			cout<<"Graph is already a mincut"<<endl;
+			return 0;
+		}
 
-		cout<<c<<endl;
-		vertex* l = edges[c].a->getAddr();
-		vertex* r = edges[c].b->getAddr();
+		std::vector<vertex> vertices(n);
+		std::vector<edge> edges;
+		edges.reserve(10 * n);
 
-		// delete the nodes in the list that represents self-loop to the contracted vertices
-		cout<<"removing "<<r->label<<" of size "<<r->size<<" from "<<l->label<<" of size "<<l->size<<endl;
-		if (l->remove(r) == 1)
+		if (!load(vertices, edges, n, myfile))
+		{
+			cout<<"Error\n";
 			return 1;
-		cout<<"removing "<<l->label<<" of size "<<l->size<<" from "<<r->label<<" of size "<<r->size<<endl;
-		if (r->remove(l) == 1)
-			return 1;
-		cout<<"merging.."<<endl;
-		// append remaining nodes of vertex r to vertexl
-		merge(l, r);
-		cout<<"deleting.. "<<endl;
-		// delete self-loop edges
-		for (int p = 0, erased = 0, l = edges.size(); p < l; p++)
-		{	
-			vertex* x = edges[p - erased].a;
-			vertex* y = edges[p - erased].b;
+		}
+		ne = edges.size();
+		// store are ll handles;
+		node* handles[n];
+		for (int i = 0; i < n; i++)
+		{
+			handles[i] = vertices[i].head;
+		}
+		/*Start of the Karger's Contraction Algorithm subroutine*/
+		srand(time(NULL) * t);	// seed the pseudo-random generator
+		for (int i = 0; i < n - 2; i++)
+		{
+			// choose a random edge
+			int c = rand() % edges.size();
+			vertex* l = edges[c].a->getAddr();
+			vertex* r = edges[c].b->getAddr();
 
-			if (x->getAddr() == y->getAddr())
-			{
-				edges.erase(edges.begin() + (p - erased));
-				erased ++;
+			// delete the nodes in the list that represents self-loop to the contracted vertices
+			if (l->remove(r) == 1)
+				return 1;
+	
+			if (r->remove(l) == 1)
+				return 1;
+
+			// append remaining nodes of vertex r to vertexl
+			merge(l, r);
+
+			// delete self-loop edges
+			for (int p = 0, erased = 0, l = edges.size(); p < l; p++)
+			{	
+				vertex* x = edges[p - erased].a;
+				vertex* y = edges[p - erased].b;
+
+				if (x->getAddr() == y->getAddr())
+				{
+					edges.erase(edges.begin() + (p - erased));
+					erased ++;
+				}
 			}
 		}
-		cout<<i<<"th loop\n";
-	}
-	
-	/*End of the Contraction Algorithm*/
+		cout<<vertices[0].size<<endl;
+		// get the number of remaining edges
+		int re = edges.size();
+		mincut = (re < mincut || mincut == 0)	?	re	: mincut;
+		
+		/*End of the Contraction Algorithm*/
 
-/*	for (int i = 0; i < n; i++)
-		vertices[i].point->dump();
-*/
-	// delete memory created on the heap
-	for (int i = 0; i < n; i++)
-	{
-		delete[] handles[i];
+	/*	for (int i = 0; i < n; i++)
+			vertices[i].point->dump();
+	*/
+		// delete memory created on the heap
+		for (int i = 0; i < n; i++)
+		{
+			delete[] handles[i];
+		}
 	}
-	cout<<"finished deleting heap memory"<<endl;
-/*	for (int i = 0, j = edges.size() ; i < j; i++)
-	{
-		vertex* x = edges[i].a;
-		vertex* y = edges[i].b;
-  		cout<<x->label<<"-"<<y->label;
-		cout<<endl;
-	}*/
-	cout<<"edges2: "<<edges.size()<<endl;
+
+	// timer stop
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>( t2 - t1 ).count();
+
+	myfile.close();
+	cout<<"vertices: "<<nv<<endl;
+	cout<<"edges: "<<ne<<endl;
+	cout<<"mincut: "<<mincut<<endl;
+	cout<<"time: "<<duration<<endl;
+	return 0;
 }
